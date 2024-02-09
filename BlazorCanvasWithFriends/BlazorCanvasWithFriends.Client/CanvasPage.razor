@@ -36,6 +36,7 @@
             this, HandleDrawLine);
 
         await CanvasClient.InitializeAsync();
+        
         await base.OnInitializedAsync();
     }
 
@@ -115,11 +116,14 @@
             // Black background
             await ctx1.FillStyleAsync("#000");
             await ctx1.FillRectAsync(0, 0, _canvasWidth, _canvasHeight);
+
+            await CanvasClient.Hub?.RequestState();
         }
     }
 
     private async Task HandleDrawLine((Point from, Point to) args)
     {
+        Console.WriteLine("DrawLine {0} {1}", args.from, args.to);
         var (from, to) = args;
         
         await using var ctx = await helper_canvas.GetContext2DAsync();

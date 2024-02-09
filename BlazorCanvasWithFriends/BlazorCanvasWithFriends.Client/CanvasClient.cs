@@ -7,10 +7,11 @@ using TypedSignalR.Client;
 
 namespace BlazorCanvasWithFriends.Client;
 
-public class CanvasClient(NavigationManager navigation) : ICanvas, IAsyncDisposable
+public class CanvasClient(NavigationManager navigation, ILogger<CanvasClient> logger) 
+    : ICanvasClient, IAsyncDisposable
 {
     private HubConnection? _hubConnection;
-    public ICanvas? Hub { get; private set; }
+    public ICanvasHub? Hub { get; private set; }
     private IDisposable? _clientSubscription;
     
     public EventCallback<(Point, Point)> OnDrawLine { get; set; }
@@ -21,16 +22,30 @@ public class CanvasClient(NavigationManager navigation) : ICanvas, IAsyncDisposa
     public async Task InitializeAsync()
     {
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl(navigation.ToAbsoluteUri(Constants.CanvasHubRoute)) // TODO: Refactor
+            .WithUrl(navigation.ToAbsoluteUri(Constants.CanvasHubRoute))
+            .AddMessagePackProtocol()
             .Build();
         
-        Hub = _hubConnection.CreateHubProxy<ICanvas>();
-        _clientSubscription = _hubConnection.Register<ICanvas>(this);
+        Hub = _hubConnection.CreateHubProxy<ICanvasHub>();
+        _clientSubscription = _hubConnection.Register<ICanvasClient>(this);
 
         await _hubConnection.StartAsync();
     }
+
+    public async Task Load(List<(Point from, Point to)> lines)
+    {
+        logger.LogInformation("Loading {Count} lines", lines.Count);
+        
+        foreach (var (from, to) in lines)
+        {
+            await OnDrawLine.InvokeAsync((from, to));
+        }
+    }
+
     public Task DrawLine(Point from, Point to)
     {
+        logger.LogInformation("Drawing line from {from} to {to}", from, to);
+        
         return OnDrawLine.InvokeAsync((from, to));
     }
 

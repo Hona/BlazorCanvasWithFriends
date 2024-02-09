@@ -7,7 +7,8 @@ using Microsoft.AspNetCore.ResponseCompression;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddRazorComponents()
+builder.Services
+    .AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
@@ -18,6 +19,10 @@ builder.Services.AddResponseCompression(opts =>
 });
 
 builder.Services.AddScoped<CanvasClient>();
+builder.Services.AddSingleton<CanvasState>();
+
+builder.Services.AddSignalR()
+    .AddMessagePackProtocol();
 
 var app = builder.Build();
 
