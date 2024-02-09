@@ -1,0 +1,132 @@
+﻿@page "/canvas"
+@rendermode InteractiveWebAssembly
+
+@using System.Drawing
+@using Excubo.Blazor.Canvas
+
+@inject CanvasClient CanvasClient
+@inject IJSRuntime JsRuntime
+
+<PageTitle>
+    Canvas
+</PageTitle>
+
+<Canvas @ref="helper_canvas" 
+        id="@CanvasId"
+        width="@(_canvasWidth + "px")" 
+        height="@(_canvasHeight + "px")" 
+        style="width: 100%; height: 100%"
+        @onmousedown="HandleMouseDown" 
+        @onmousemove="HandleMouseMove"
+        @onmouseup="HandleMouseUp" />
+
+<p>
+    IsConnected : @CanvasClient.IsConnected
+</p>
+
+@code {
+    
+    private int _canvasWidth = 800;
+    private int _canvasHeight = 600;
+    private const string CanvasId = "canvaswithfriends";
+
+    protected override async Task OnInitializedAsync()
+    {
+        CanvasClient.OnDrawLine = EventCallback.Factory.Create<(Point, Point)>(
+            this, HandleDrawLine);
+
+        await CanvasClient.InitializeAsync();
+        await base.OnInitializedAsync();
+    }
+
+    // Canvas
+    private Point? _from;
+    private Point? _to;
+
+    private record CanvasBounds(double Left, double Top, double Width, double Height);
+    private record BrowserScroll(double X, double Y);
+    
+    private async Task<Point> GetMousePosition(MouseEventArgs e)
+    {
+        var element = await JsRuntime.InvokeAsync<IJSObjectReference>("document.getElementById", CanvasId);
+        var rect = await element.InvokeAsync<CanvasBounds>("getBoundingClientRect");
+    
+        var scroll = await JsRuntime.InvokeAsync<BrowserScroll>("getScroll");
+    
+        // Calculate the mouse position within the canvas by taking the mouse position relative to the viewport (e.ClientX, e.ClientY),
+        // subtracting the canvas's position relative to the viewport (rect.Left + scroll.X, rect.Top + scroll.Y),
+        // and then scaling these values according to the actual size of the canvas in the document.
+        var x = e.ClientX - rect.Left + scroll.X;
+        var y = e.ClientY - rect.Top + scroll.Y;
+    
+        // Adjust for any scaling if the canvas is styled differently from its intrinsic size.
+        var scaleX = _canvasWidth / rect.Width;
+        var scaleY = _canvasHeight / rect.Height;
+    
+        x *= scaleX;
+        y *= scaleY;
+    
+        return new Point((int)x, (int)y);
+    }
+
+    
+    private async Task HandleMouseDown(MouseEventArgs e)
+    {
+        var point = await GetMousePosition(e);
+        _from = point;
+    }
+    
+    private async Task HandleMouseUp(MouseEventArgs e)
+    {
+        var point = await GetMousePosition(e);
+        _to = point;
+        
+        if (_from is not null && _to is not null)
+        {
+            await CanvasClient.Hub?.DrawLine(_from.Value, _to.Value);
+            
+            _from = null;
+            _to = null;
+        }
+    }
+    
+    private async Task HandleMouseMove(MouseEventArgs e)
+    {
+        if (_from is not null)
+        {
+            var point = await GetMousePosition(e);
+            _to = point;
+            
+            if (_from is not null && _to is not null)
+            {
+                await CanvasClient.Hub?.DrawLine(_from.Value, _to.Value);
+                
+                _from = _to;
+            }
+        }
+    }
+    
+    private Canvas helper_canvas;
+    protected override async Task OnAfterRenderAsync(bool first_render)
+    {
+        if (first_render)
+        {
+            await using var ctx1 = await helper_canvas.GetContext2DAsync();
+            // Black background
+            await ctx1.FillStyleAsync("#000");
+            await ctx1.FillRectAsync(0, 0, _canvasWidth, _canvasHeight);
+        }
+    }
+
+    private async Task HandleDrawLine((Point from, Point to) args)
+    {
+        var (from, to) = args;
+        
+        await using var ctx = await helper_canvas.GetContext2DAsync();
+        await ctx.StrokeStyleAsync("#fff");
+        await ctx.BeginPathAsync();
+        await ctx.MoveToAsync(from.X, from.Y);
+        await ctx.LineToAsync(to.X, to.Y);
+        await ctx.StrokeAsync();
+    }
+}
