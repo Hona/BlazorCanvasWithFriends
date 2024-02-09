@@ -91,10 +91,20 @@
         }
     }
     
+    private DateTime _lastUpdateSent = DateTime.MinValue;
+
+    private const double TicksPerSecond = 64; 
+    
+    private TimeSpan _throttleDuration = TimeSpan.FromMilliseconds(1000 / TicksPerSecond);
+
+    
     private async Task HandleMouseMove(MouseEventArgs e)
     {
         if (_from is not null)
         {
+            var now = DateTime.Now;
+            if ((now - _lastUpdateSent) < _throttleDuration) return; // Throttle the method call
+
             var point = await GetMousePosition(e);
             _to = point;
             
@@ -103,6 +113,7 @@
                 await CanvasClient.Hub?.DrawLine(_from.Value, _to.Value);
                 
                 _from = _to;
+                _lastUpdateSent = now;
             }
         }
     }
