@@ -1,8 +1,9 @@
 ﻿using System.Drawing;
+using BlazorWithFriends.Shared.Models;
 
 namespace BlazorCanvasWithFriends.Hubs;
 
 public class CanvasState
 {
-    public List<(Point from, Point to)> Lines { get; set; } = new();
+    public List<(Point2D from, Point2D to)> Lines { get; set; } = new();
 }

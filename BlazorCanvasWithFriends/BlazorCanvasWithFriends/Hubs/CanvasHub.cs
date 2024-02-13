@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using BlazorWithFriends.Shared.Models;
 using BlazorWithFriends.Shared.SignalR;
 using Microsoft.AspNetCore.SignalR;
 
@@ -24,7 +25,7 @@ public class CanvasHub : Hub<ICanvasClient>, ICanvasHub
             .Load(_state.Lines);
     }
 
-    public async Task DrawLine(Point from, Point to)
+    public async Task DrawLine(Point2D from, Point2D to)
     {
         _logger.LogInformation("DrawLine from {from} to {to}", from, to);
         

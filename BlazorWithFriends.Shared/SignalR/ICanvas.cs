@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using BlazorWithFriends.Shared.Models;
 
 namespace BlazorWithFriends.Shared.SignalR;
 
@@ -11,12 +12,12 @@ public interface ICanvasHub
 {
     Task RequestState();
     
-    Task DrawLine(Point from, Point to);
+    Task DrawLine(Point2D from, Point2D to);
 }
 
 public interface ICanvasClient
 {
-    Task Load(List<(Point from, Point to)> lines);
+    Task Load(List<(Point2D from, Point2D to)> lines);
     
-    Task DrawLine(Point from, Point to);
+    Task DrawLine(Point2D from, Point2D to);
 }

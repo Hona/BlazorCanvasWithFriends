@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using BlazorWithFriends.Shared;
+using BlazorWithFriends.Shared.Models;
 using BlazorWithFriends.Shared.SignalR;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -14,7 +15,7 @@ public class CanvasClient(NavigationManager navigation, ILogger<CanvasClient> lo
     public ICanvasHub? Hub { get; private set; }
     private IDisposable? _clientSubscription;
     
-    public EventCallback<(Point, Point)> OnDrawLine { get; set; }
+    public EventCallback<(Point2D, Point2D)> OnDrawLine { get; set; }
     
     public bool IsConnected =>
         _hubConnection?.State == HubConnectionState.Connected;
@@ -31,7 +32,7 @@ public class CanvasClient(NavigationManager navigation, ILogger<CanvasClient> lo
         await _hubConnection.StartAsync();
     }
 
-    public async Task Load(List<(Point from, Point to)> lines)
+    public async Task Load(List<(Point2D from, Point2D to)> lines)
     {
         logger.LogInformation("Loading {Count} lines", lines.Count);
         
@@ -41,7 +42,7 @@ public class CanvasClient(NavigationManager navigation, ILogger<CanvasClient> lo
         }
     }
 
-    public Task DrawLine(Point from, Point to)
+    public Task DrawLine(Point2D from, Point2D to)
     {
         logger.LogInformation("Drawing line from {from} to {to}", from, to);
         

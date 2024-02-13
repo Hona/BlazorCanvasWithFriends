@@ -2,6 +2,7 @@
 @rendermode InteractiveWebAssembly
 
 @using System.Drawing
+@using BlazorWithFriends.Shared.Models
 @using Excubo.Blazor.Canvas
 
 @inject CanvasClient CanvasClient
@@ -32,7 +33,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        CanvasClient.OnDrawLine = EventCallback.Factory.Create<(Point, Point)>(
+        CanvasClient.OnDrawLine = EventCallback.Factory.Create<(Point2D, Point2D)>(
             this, HandleDrawLine);
 
         await CanvasClient.InitializeAsync();
@@ -41,13 +42,13 @@
     }
 
     // Canvas
-    private Point? _from;
-    private Point? _to;
+    private Point2D? _from;
+    private Point2D? _to;
 
     private record CanvasBounds(double Left, double Top, double Width, double Height);
     private record BrowserScroll(double X, double Y);
     
-    private async Task<Point> GetMousePosition(MouseEventArgs e)
+    private async Task<Point2D> GetMousePosition(MouseEventArgs e)
     {
         var element = await JsRuntime.InvokeAsync<IJSObjectReference>("document.getElementById", CanvasId);
         var rect = await element.InvokeAsync<CanvasBounds>("getBoundingClientRect");
@@ -67,7 +68,7 @@
         x *= scaleX;
         y *= scaleY;
     
-        return new Point((int)x, (int)y);
+        return new Point2D((int)x, (int)y);
     }
 
     
@@ -84,7 +85,7 @@
         
         if (_from is not null && _to is not null)
         {
-            await CanvasClient.Hub?.DrawLine(_from.Value, _to.Value);
+            await CanvasClient.Hub?.DrawLine(_from, _to);
             
             _from = null;
             _to = null;
@@ -110,7 +111,7 @@
             
             if (_from is not null && _to is not null)
             {
-                await CanvasClient.Hub?.DrawLine(_from.Value, _to.Value);
+                await CanvasClient.Hub?.DrawLine(_from, _to);
                 
                 _from = _to;
                 _lastUpdateSent = now;
@@ -132,7 +133,7 @@
         }
     }
 
-    private async Task HandleDrawLine((Point from, Point to) args)
+    private async Task HandleDrawLine((Point2D from, Point2D to) args)
     {
         Console.WriteLine("DrawLine {0} {1}", args.from, args.to);
         var (from, to) = args;
