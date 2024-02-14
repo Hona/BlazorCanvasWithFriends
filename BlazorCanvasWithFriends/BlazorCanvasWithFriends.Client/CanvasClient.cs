@@ -24,6 +24,7 @@ public class CanvasClient(NavigationManager navigation, ILogger<CanvasClient> lo
     {
         _hubConnection = new HubConnectionBuilder()
             .WithUrl(navigation.ToAbsoluteUri(Constants.CanvasHubRoute))
+            .AddMessagePackProtocol()
             .Build();
         
         Hub = _hubConnection.CreateHubProxy<ICanvasHub>();

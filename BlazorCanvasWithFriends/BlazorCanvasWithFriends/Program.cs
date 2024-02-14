@@ -21,7 +21,8 @@ builder.Services.AddResponseCompression(opts =>
 builder.Services.AddScoped<CanvasClient>();
 builder.Services.AddSingleton<CanvasState>();
 
-builder.Services.AddSignalR();
+builder.Services.AddSignalR()
+    .AddMessagePackProtocol();
 
 var app = builder.Build();
 
