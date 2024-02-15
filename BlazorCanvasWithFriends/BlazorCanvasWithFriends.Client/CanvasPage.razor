@@ -1,4 +1,4 @@
-﻿@page "/canvas"
+﻿@page "/"
 @rendermode InteractiveWebAssembly
 
 @using System.Drawing
@@ -19,7 +19,10 @@
         style="width: 100%; height: 100%"
         @onmousedown="HandleMouseDown" 
         @onmousemove="HandleMouseMove"
-        @onmouseup="HandleMouseUp" />
+        @onmouseup="HandleMouseUp"
+        @ontouchstart="HandleTouchStart"
+        @ontouchmove="HandleTouchMove"
+        @ontouchend="HandleTouchEnd"/>
 
 <p>
     IsConnected : @CanvasClient.IsConnected
@@ -47,77 +50,73 @@
 
     private record CanvasBounds(double Left, double Top, double Width, double Height);
     private record BrowserScroll(double X, double Y);
-    
-    private async Task<Point2D> GetMousePosition(MouseEventArgs e)
+
+    private async Task<Point2D> GetPosition(double clientX, double clientY)
     {
         var element = await JsRuntime.InvokeAsync<IJSObjectReference>("document.getElementById", CanvasId);
         var rect = await element.InvokeAsync<CanvasBounds>("getBoundingClientRect");
-    
         var scroll = await JsRuntime.InvokeAsync<BrowserScroll>("getScroll");
-    
-        // Calculate the mouse position within the canvas by taking the mouse position relative to the viewport (e.ClientX, e.ClientY),
-        // subtracting the canvas's position relative to the viewport (rect.Left + scroll.X, rect.Top + scroll.Y),
-        // and then scaling these values according to the actual size of the canvas in the document.
-        var x = e.ClientX - rect.Left + scroll.X;
-        var y = e.ClientY - rect.Top + scroll.Y;
-    
-        // Adjust for any scaling if the canvas is styled differently from its intrinsic size.
+
+        var x = clientX - rect.Left + scroll.X;
+        var y = clientY - rect.Top + scroll.Y;
+
         var scaleX = _canvasWidth / rect.Width;
         var scaleY = _canvasHeight / rect.Height;
-    
+
         x *= scaleX;
         y *= scaleY;
-    
+
         return new Point2D((int)x, (int)y);
     }
 
+    // Mouse
+    private async Task HandleMouseDown(MouseEventArgs e) => _from = await GetPosition(e.ClientX, e.ClientY);
+    private async Task HandleMouseMove(MouseEventArgs e) => await ProcessDrawing(e.ClientX, e.ClientY);
+    private async Task HandleMouseUp(MouseEventArgs e) => await EndDrawing(e.ClientX, e.ClientY);
+
+    // Mobile - touch
+    private async Task HandleTouchStart(TouchEventArgs e) => _from = await GetPosition(e.Touches[0].ClientX, e.Touches[0].ClientY);
+    private async Task HandleTouchMove(TouchEventArgs e) => await ProcessDrawing(e.Touches[0].ClientX, e.Touches[0].ClientY);
+    private async Task HandleTouchEnd(TouchEventArgs e) => await EndDrawing(e.ChangedTouches[0].ClientX, e.ChangedTouches[0].ClientY);
+
     
-    private async Task HandleMouseDown(MouseEventArgs e)
+    private async Task ProcessDrawing(double clientX, double clientY)
     {
-        var point = await GetMousePosition(e);
-        _from = point;
-    }
-    
-    private async Task HandleMouseUp(MouseEventArgs e)
-    {
-        var point = await GetMousePosition(e);
-        _to = point;
-        
-        if (_from is not null && _to is not null)
+        if (_from is null) return;
+
+        var now = DateTime.Now;
+        if ((now - _lastUpdateSent) < _throttleDuration) return;
+
+        _to = await GetPosition(clientX, clientY);
+
+        if (_to is not null)
         {
             await CanvasClient.Hub?.DrawLine(_from, _to);
-            
+            _from = _to;
+            _lastUpdateSent = now;
+        }
+    }
+
+    private async Task EndDrawing(double clientX, double clientY)
+    {
+        if (_from is null) return;
+
+        _to = await GetPosition(clientX, clientY);
+
+        if (_to is not null)
+        {
+            await CanvasClient.Hub?.DrawLine(_from, _to);
             _from = null;
             _to = null;
         }
     }
+
     
     private DateTime _lastUpdateSent = DateTime.MinValue;
 
-    private const double TicksPerSecond = 64; 
-    
+    private const double TicksPerSecond = 64;
+
     private TimeSpan _throttleDuration = TimeSpan.FromMilliseconds(1000 / TicksPerSecond);
-
-    
-    private async Task HandleMouseMove(MouseEventArgs e)
-    {
-        if (_from is not null)
-        {
-            var now = DateTime.Now;
-            if ((now - _lastUpdateSent) < _throttleDuration) return; // Throttle the method call
-
-            var point = await GetMousePosition(e);
-            _to = point;
-            
-            if (_from is not null && _to is not null)
-            {
-                await CanvasClient.Hub?.DrawLine(_from, _to);
-                
-                _from = _to;
-                _lastUpdateSent = now;
-            }
-        }
-    }
     
     private Canvas helper_canvas;
     protected override async Task OnAfterRenderAsync(bool first_render)
