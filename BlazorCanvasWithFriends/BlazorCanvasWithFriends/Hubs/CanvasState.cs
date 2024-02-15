@@ -5,5 +5,5 @@ namespace BlazorCanvasWithFriends.Hubs;
 
 public class CanvasState
 {
-    public List<(Point2D from, Point2D to)> Lines { get; set; } = new();
+    public List<Line> Lines { get; set; } = new();
 }

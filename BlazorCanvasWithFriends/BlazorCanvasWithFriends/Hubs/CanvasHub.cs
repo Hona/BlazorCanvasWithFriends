@@ -25,13 +25,22 @@ public class CanvasHub : Hub<ICanvasClient>, ICanvasHub
             .Load(_state.Lines);
     }
 
-    public async Task DrawLine(Point2D from, Point2D to)
+    public async Task DrawLine(Line line)
     {
-        _logger.LogInformation("DrawLine from {from} to {to}", from, to);
+        _logger.LogInformation("DrawLine {Line}", line);
         
-        _state.Lines.Add((from, to));
+        _state.Lines.Add(line);
         
         await Clients.All
-            .DrawLine(from, to);
+            .DrawLine(line);
+    }
+
+    public Task Clear()
+    {
+        _logger.LogInformation("Clear");
+        
+        _state.Lines.Clear();
+
+        return Clients.All.Clear();
     }
 }

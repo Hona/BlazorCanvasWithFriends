@@ -15,7 +15,8 @@ public class CanvasClient(NavigationManager navigation, ILogger<CanvasClient> lo
     public ICanvasHub? Hub { get; private set; }
     private IDisposable? _clientSubscription;
     
-    public EventCallback<(Point2D, Point2D)> OnDrawLine { get; set; }
+    public EventCallback<Line> OnDrawLine { get; set; }
+    public EventCallback OnClear { get; set; }
     
     public bool IsConnected =>
         _hubConnection?.State == HubConnectionState.Connected;
@@ -33,21 +34,28 @@ public class CanvasClient(NavigationManager navigation, ILogger<CanvasClient> lo
         await _hubConnection.StartAsync();
     }
 
-    public async Task Load(List<(Point2D from, Point2D to)> lines)
+    public async Task Load(List<Line> lines)
     {
         logger.LogInformation("Loading {Count} lines", lines.Count);
         
-        foreach (var (from, to) in lines)
+        foreach (var line in lines)
         {
-            await OnDrawLine.InvokeAsync((from, to));
+            await OnDrawLine.InvokeAsync(line);
         }
     }
 
-    public Task DrawLine(Point2D from, Point2D to)
+    public Task DrawLine(Line line)
     {
-        logger.LogInformation("Drawing line from {from} to {to}", from, to);
+        logger.LogInformation("Drawing line {Line}", line);
         
-        return OnDrawLine.InvokeAsync((from, to));
+        return OnDrawLine.InvokeAsync(line);
+    }
+
+    public Task Clear()
+    {
+        logger.LogInformation("Clearing");
+        
+        return OnClear.InvokeAsync();
     }
 
     public async ValueTask DisposeAsync()

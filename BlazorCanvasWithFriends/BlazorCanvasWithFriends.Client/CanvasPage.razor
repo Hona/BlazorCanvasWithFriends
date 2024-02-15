@@ -1,7 +1,6 @@
 ﻿@page "/"
 @rendermode InteractiveWebAssembly
 
-@using System.Drawing
 @using BlazorWithFriends.Shared.Models
 @using Excubo.Blazor.Canvas
 
@@ -28,6 +27,10 @@
     IsConnected : @CanvasClient.IsConnected
 </p>
 
+<button @onclick="TriggerClear">
+    Clear
+</button>
+
 @code {
     
     private int _canvasWidth = 800;
@@ -36,9 +39,12 @@
 
     protected override async Task OnInitializedAsync()
     {
-        CanvasClient.OnDrawLine = EventCallback.Factory.Create<(Point2D, Point2D)>(
+        CanvasClient.OnDrawLine = EventCallback.Factory.Create<Line>(
             this, HandleDrawLine);
 
+        CanvasClient.OnClear = EventCallback.Factory.Create(
+            this, Clear);
+        
         await CanvasClient.InitializeAsync();
         
         await base.OnInitializedAsync();
@@ -91,7 +97,7 @@
 
         if (_to is not null)
         {
-            await CanvasClient.Hub?.DrawLine(_from, _to);
+            await CanvasClient.Hub?.DrawLine(new Line(_from, _to));
             _from = _to;
             _lastUpdateSent = now;
         }
@@ -105,7 +111,7 @@
 
         if (_to is not null)
         {
-            await CanvasClient.Hub?.DrawLine(_from, _to);
+            await CanvasClient.Hub?.DrawLine(new Line(_from, _to));
             _from = null;
             _to = null;
         }
@@ -123,25 +129,32 @@
     {
         if (first_render)
         {
-            await using var ctx1 = await helper_canvas.GetContext2DAsync();
-            // Black background
-            await ctx1.FillStyleAsync("#000");
-            await ctx1.FillRectAsync(0, 0, _canvasWidth, _canvasHeight);
+            Clear();
 
             await CanvasClient.Hub?.RequestState();
         }
     }
 
-    private async Task HandleDrawLine((Point2D from, Point2D to) args)
+    private async Task HandleDrawLine(Line line)
     {
-        Console.WriteLine("DrawLine {0} {1}", args.from, args.to);
-        var (from, to) = args;
+        Console.WriteLine("DrawLine {0}", line);
         
         await using var ctx = await helper_canvas.GetContext2DAsync();
         await ctx.StrokeStyleAsync("#fff");
         await ctx.BeginPathAsync();
-        await ctx.MoveToAsync(from.X, from.Y);
-        await ctx.LineToAsync(to.X, to.Y);
+        await ctx.MoveToAsync(line.From.X, line.From.Y);
+        await ctx.LineToAsync(line.To.X, line.To.Y);
         await ctx.StrokeAsync();
     }
+    
+    private async Task Clear()
+    {
+        await using var ctx1 = await helper_canvas.GetContext2DAsync();
+        
+        // Black background
+        await ctx1.FillStyleAsync("#000");
+        await ctx1.FillRectAsync(0, 0, _canvasWidth, _canvasHeight);
+    }
+    
+    private Task TriggerClear() => CanvasClient.Hub?.Clear();
 }
