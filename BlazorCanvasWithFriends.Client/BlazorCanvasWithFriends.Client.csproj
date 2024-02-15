@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\BlazorWithFriends.Shared\BlazorWithFriends.Shared.csproj" />
+    <ProjectReference Include="..\BlazorCanvasWithFriends.Shared\BlazorCanvasWithFriends.Shared.csproj" />
   </ItemGroup>
 
 </Project>

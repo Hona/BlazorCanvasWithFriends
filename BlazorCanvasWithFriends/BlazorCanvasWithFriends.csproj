@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="8.0.1" />
-    <ProjectReference Include="..\..\BlazorWithFriends.Shared\BlazorWithFriends.Shared.csproj" />
+    <ProjectReference Include="..\BlazorCanvasWithFriends.Shared\BlazorCanvasWithFriends.Shared.csproj" />
     <ProjectReference Include="..\BlazorCanvasWithFriends.Client\BlazorCanvasWithFriends.Client.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.1" />
   </ItemGroup>
