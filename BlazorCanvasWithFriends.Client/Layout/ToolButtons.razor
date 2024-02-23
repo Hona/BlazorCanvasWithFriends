@@ -1,0 +1,30 @@
+﻿@rendermode InteractiveWebAssembly
+
+@inject CanvasClient CanvasClient
+
+@implements IDisposable
+
+<FluentStack>
+    <FluentButton>
+        <FluentEmoji Value="@(new Emojis.Objects.Color.Default.Paintbrush())"/>
+    </FluentButton>
+
+    <FluentButton OnClick="TriggerClear">
+        <FluentEmoji Value="@(new Emojis.Objects.Color.Default.Wastebasket())"/>
+    </FluentButton>
+</FluentStack>
+@code {
+    private void TriggerClear() => CanvasClient.Hub?.Clear();
+
+    protected override void OnInitialized()
+    {
+        CanvasClient.OnConnected += StateHasChanged;
+        CanvasClient.OnDisconnected += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        CanvasClient.OnConnected -= StateHasChanged;
+        CanvasClient.OnDisconnected -= StateHasChanged;
+    }
+}

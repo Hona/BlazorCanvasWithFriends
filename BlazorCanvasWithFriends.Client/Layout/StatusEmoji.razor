@@ -1,0 +1,28 @@
+﻿@rendermode InteractiveWebAssembly
+
+@inject CanvasClient CanvasClient
+@implements IDisposable
+
+@if (CanvasClient.IsConnected)
+{
+    <FluentEmoji Value="@(new Emojis.Symbols.Color.Default.CheckBoxWithCheck())"/>
+}
+else
+{
+    <FluentEmoji Value="@(new Emojis.Symbols.Color.Default.CrossMark())"/>
+}
+
+@code {
+
+    protected override void OnInitialized()
+    {
+        CanvasClient.OnConnected += StateHasChanged;
+        CanvasClient.OnDisconnected += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        CanvasClient.OnConnected -= StateHasChanged;
+        CanvasClient.OnDisconnected -= StateHasChanged;
+    }
+}

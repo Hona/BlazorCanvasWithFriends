@@ -1,28 +1,14 @@
 ﻿@inherits LayoutComponentBase
+@using BlazorCanvasWithFriends.Client.Layout
 
 @inject CanvasClient CanvasClient
 
-@implements IDisposable
-
 <FluentHeader>
-    <FluentButton>
-        <FluentEmoji Value="@(new Emojis.Objects.Color.Default.Paintbrush())"/>
-    </FluentButton>
-
-    <FluentButton OnClick="TriggerClear">
-        <FluentEmoji Value="@(new Emojis.Objects.Color.Default.Wastebasket())"/>
-    </FluentButton>
+    <ToolButtons />
     
     <FluentSpacer />
 
-    @if (CanvasClient.IsConnected)
-    {
-        <FluentEmoji Value="@(new Emojis.Symbols.Color.Default.CheckBoxWithCheck())"/>
-    }
-    else
-    {
-        <FluentEmoji Value="@(new Emojis.Symbols.Color.Default.CrossMark())"/>
-    }
+    <StatusEmoji />
 </FluentHeader>
 
 <main>
@@ -33,21 +19,3 @@
 <FluentDialogProvider />
 <FluentTooltipProvider />
 <FluentMessageBarProvider />
-
-@code{
-
-    private void TriggerClear() => CanvasClient.Hub?.Clear();
-
-
-    protected override void OnInitialized()
-    {
-        CanvasClient.OnConnected += StateHasChanged;
-        CanvasClient.OnDisconnected += StateHasChanged;
-    }
-
-    public void Dispose()
-    {
-        CanvasClient.OnConnected -= StateHasChanged;
-        CanvasClient.OnDisconnected -= StateHasChanged;
-    }
-}

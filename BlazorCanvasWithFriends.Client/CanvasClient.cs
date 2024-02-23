@@ -38,11 +38,10 @@ public class CanvasClient(NavigationManager navigation, ILogger<CanvasClient> lo
 
             return Task.CompletedTask;
         };
-        
+
         HubConnection.Reconnected += connectionId =>
         {
-            logger.LogInformation("Reconnected: {ConnectionId}", connectionId);
-            OnConnected?.Invoke();
+            InvokeOnConnected();
             
             return Task.CompletedTask;
         };
@@ -51,6 +50,14 @@ public class CanvasClient(NavigationManager navigation, ILogger<CanvasClient> lo
         _clientSubscription = HubConnection.Register<ICanvasClient>(this);
 
         await HubConnection.StartAsync();
+
+        InvokeOnConnected();
+    }
+
+    private void InvokeOnConnected()
+    {
+        logger.LogInformation("SignalR connected");
+        OnConnected?.Invoke();
     }
 
     public async Task Load(List<Line> lines)
