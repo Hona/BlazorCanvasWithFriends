@@ -87,9 +87,10 @@
 
         if (_to is not null)
         {
-            await CanvasClient.Hub?.DrawLine(new Line(_from, _to));
+            var drawTask = CanvasClient.Hub?.DrawLine(new Line(_from, _to));
             _from = _to;
             _lastUpdateSent = now;
+            if (drawTask != null) await drawTask;
         }
     }
 
@@ -101,9 +102,10 @@
 
         if (_to is not null)
         {
-            await CanvasClient.Hub?.DrawLine(new Line(_from, _to));
+            var drawTask = CanvasClient.Hub?.DrawLine(new Line(_from, _to));
             _from = null;
             _to = null;
+            if (drawTask != null) await drawTask;
         }
     }
 
