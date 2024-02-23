@@ -13,4 +13,9 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="BlazorCanvasWithFriends\obj\BlazorCanvasWithFriends.csproj.nuget.dgspec.json" />
+    <_ContentIncludedByDefault Remove="BlazorCanvasWithFriends\obj\project.assets.json" />
+  </ItemGroup>
+
 </Project>

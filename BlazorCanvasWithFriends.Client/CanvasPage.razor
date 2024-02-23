@@ -7,6 +7,8 @@
 @inject CanvasClient CanvasClient
 @inject IJSRuntime JsRuntime
 
+@layout CanvasLayout
+
 <PageTitle>
     Canvas
 </PageTitle>
@@ -22,14 +24,6 @@
         @ontouchstart="HandleTouchStart"
         @ontouchmove="HandleTouchMove"
         @ontouchend="HandleTouchEnd"/>
-
-<p>
-    IsConnected : @CanvasClient.IsConnected
-</p>
-
-<button @onclick="TriggerClear">
-    Clear
-</button>
 
 @code {
     
@@ -61,10 +55,9 @@
     {
         var element = await JsRuntime.InvokeAsync<IJSObjectReference>("document.getElementById", CanvasId);
         var rect = await element.InvokeAsync<CanvasBounds>("getBoundingClientRect");
-        var scroll = await JsRuntime.InvokeAsync<BrowserScroll>("getScroll");
 
-        var x = clientX - rect.Left + scroll.X;
-        var y = clientY - rect.Top + scroll.Y;
+        var x = clientX - rect.Left;
+        var y = clientY - rect.Top;
 
         var scaleX = _canvasWidth / rect.Width;
         var scaleY = _canvasHeight / rect.Height;
@@ -155,6 +148,4 @@
         await ctx1.FillStyleAsync("#000");
         await ctx1.FillRectAsync(0, 0, _canvasWidth, _canvasHeight);
     }
-    
-    private Task TriggerClear() => CanvasClient.Hub?.Clear();
 }
