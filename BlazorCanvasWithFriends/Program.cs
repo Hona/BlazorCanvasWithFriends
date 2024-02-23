@@ -3,6 +3,7 @@ using BlazorCanvasWithFriends.Components;
 using BlazorCanvasWithFriends.Hubs;
 using BlazorWithFriends.Shared;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.FluentUI.AspNetCore.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,8 @@ builder.Services.AddResponseCompression(opts =>
 
 builder.Services.AddScoped<CanvasClient>();
 builder.Services.AddSingleton<CanvasState>();
+
+builder.Services.AddFluentUIComponents();
 
 builder.Services.AddSignalR()
     .AddMessagePackProtocol();

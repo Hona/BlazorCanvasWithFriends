@@ -1,5 +1,4 @@
-﻿using System.Drawing;
-using BlazorWithFriends.Shared;
+﻿using BlazorWithFriends.Shared;
 using BlazorWithFriends.Shared.Models;
 using BlazorWithFriends.Shared.SignalR;
 using Microsoft.AspNetCore.Components;
@@ -11,27 +10,54 @@ namespace BlazorCanvasWithFriends.Client;
 public class CanvasClient(NavigationManager navigation, ILogger<CanvasClient> logger) 
     : ICanvasClient, IAsyncDisposable
 {
-    private HubConnection? _hubConnection;
+    public HubConnection? HubConnection { get; private set; }
+    
     public ICanvasHub? Hub { get; private set; }
     private IDisposable? _clientSubscription;
     
     public EventCallback<Line> OnDrawLine { get; set; }
     public EventCallback OnClear { get; set; }
     
+    public Action? OnConnected { get; set; }
+    public Action? OnDisconnected { get; set; }
+    
     public bool IsConnected =>
-        _hubConnection?.State == HubConnectionState.Connected;
+        HubConnection?.State == HubConnectionState.Connected;
     
     public async Task InitializeAsync()
     {
-        _hubConnection = new HubConnectionBuilder()
+        HubConnection = new HubConnectionBuilder()
             .WithUrl(navigation.ToAbsoluteUri(Constants.CanvasHubRoute))
             .AddMessagePackProtocol()
             .Build();
         
-        Hub = _hubConnection.CreateHubProxy<ICanvasHub>();
-        _clientSubscription = _hubConnection.Register<ICanvasClient>(this);
+        HubConnection.Closed += error =>
+        {
+            logger.LogWarning("Connection closed: {Error}", error);
+            OnDisconnected?.Invoke();
 
-        await _hubConnection.StartAsync();
+            return Task.CompletedTask;
+        };
+
+        HubConnection.Reconnected += connectionId =>
+        {
+            InvokeOnConnected();
+            
+            return Task.CompletedTask;
+        };
+        
+        Hub = HubConnection.CreateHubProxy<ICanvasHub>();
+        _clientSubscription = HubConnection.Register<ICanvasClient>(this);
+
+        await HubConnection.StartAsync();
+
+        InvokeOnConnected();
+    }
+
+    private void InvokeOnConnected()
+    {
+        logger.LogInformation("SignalR connected");
+        OnConnected?.Invoke();
     }
 
     public async Task Load(List<Line> lines)
@@ -60,7 +86,8 @@ public class CanvasClient(NavigationManager navigation, ILogger<CanvasClient> lo
 
     public async ValueTask DisposeAsync()
     {
-        if (_hubConnection != null) await _hubConnection.DisposeAsync();
+        if (HubConnection != null) await HubConnection.DisposeAsync();
+        
         if (_clientSubscription is IAsyncDisposable clientSubscriptionAsyncDisposable)
             await clientSubscriptionAsyncDisposable.DisposeAsync();
         else

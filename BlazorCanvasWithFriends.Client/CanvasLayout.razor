@@ -1,0 +1,21 @@
+﻿@inherits LayoutComponentBase
+@using BlazorCanvasWithFriends.Client.Layout
+
+@inject CanvasClient CanvasClient
+
+<FluentHeader>
+    <ToolButtons />
+    
+    <FluentSpacer />
+
+    <StatusEmoji />
+</FluentHeader>
+
+<main>
+    @Body
+</main>
+
+<FluentToastProvider />
+<FluentDialogProvider />
+<FluentTooltipProvider />
+<FluentMessageBarProvider />
